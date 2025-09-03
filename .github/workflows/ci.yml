@@ -210,7 +210,7 @@ jobs:
       id: trusted_publish
       
     - name: Publish to PyPI (API Token Fallback)
-      if: steps.trusted_publish.outcome == 'failure' && secrets.PYPI_API_TOKEN != ''
+      if: steps.trusted_publish.outcome == 'failure'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
