@@ -186,8 +186,63 @@ jobs:
     - name: List distribution files
       run: ls -la dist/
     
-    - name: Publish to PyPI
+    - name: Verify distribution files
+      run: |
+        echo "Checking wheel and sdist files..."
+        if [ -z "$(ls dist/*.whl 2>/dev/null)" ]; then
+          echo "ERROR: No wheel files found!"
+          exit 1
+        fi
+        if [ -z "$(ls dist/*.tar.gz 2>/dev/null)" ]; then
+          echo "ERROR: No source distribution found!"
+          exit 1
+        fi
+        echo "Distribution files verified successfully"
+    
+    - name: Publish to PyPI (Trusted Publishers)
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         skip-existing: true
         verbose: true
+        print-hash: true
+      # Fallback to API token if trusted publishing fails
+      continue-on-error: true
+      id: trusted_publish
+      
+    - name: Publish to PyPI (API Token Fallback)
+      if: steps.trusted_publish.outcome == 'failure' && secrets.PYPI_API_TOKEN != ''
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        skip-existing: true
+        verbose: true
+        print-hash: true
+
+  publish-test:
+    name: Publish to TestPyPI
+    runs-on: ubuntu-latest
+    needs: [test, lint, build-wheels, build-sdist]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[test-release]')
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/markdown-it-accel/
+    permissions:
+      id-token: write
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        merge-multiple: true
+    
+    - name: List distribution files
+      run: ls -la dist/
+    
+    - name: Publish to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        skip-existing: true
+        verbose: true
+        print-hash: true
