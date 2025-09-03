@@ -5,7 +5,7 @@ def render_html(text: str) -> str:
     Render markdown text to HTML using pulldown-cmark.
 
     Args:
-        input: The markdown text to render
+        text: The markdown text to render
 
     Returns:
         The rendered HTML string
@@ -20,7 +20,7 @@ def is_supported(text: str) -> bool:
     Check if a markdown string contains features that may not be supported.
 
     Args:
-        input: The markdown text to check
+        text: The markdown text to check
 
     Returns:
         True if the content is supported, False otherwise
